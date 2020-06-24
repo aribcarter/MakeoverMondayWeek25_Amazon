@@ -1,14 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta charset="utf-8">
 		<title>Amazon's Profit & Sales</title>
 		<script src="//d3js.org/d3.v5.min.js"></script>
+		<link rel="stylesheet" href="amazonStylings.css" type="text/css"/>
+		<meta charset="utf-8">
   </head>
 
   <body>
-    <p>
-      Placeholder
-      </p>
+    <h1>How Amazon Grows (And Avoids Taxes)</h1>
+
+		<div id="firstChart">
+			<p>This graph demonstrates the vast disparity between Amazon's revenue and
+					their declared profits, but doesn't tell the whole story</p>
+
+			<script type="text/javascript">
+
+				width=700
+				height = 300
+				axisPad = 75
+
+				var svg = d3.select("#firstChart")
+								.append("svg")
+								.attr("width", width)
+								.attr("height", height);
+
+				var parseTime = d3.timeParse("%Y-%m-%d");
+				var formatTime = d3.timeFormat("%b '%y")
+
+				var processData = function(d){
+					return {
+						date: parseTime(d.Quarter),
+						sales: parseFloat(d.Revenue_Millions),//*1000000,
+						profit: parseFloat(d.Income_Millions)//*1000000
+					};
+				}
+
+				d3.csv("AmazonMoney.csv", processData).then(function(response) {
+					var data = response
+
+					xScale = d3.scaleTime()
+								   .domain([
+										d3.min(data, function(d) { return d.date; }),
+										d3.max(data, function(d) { return d.date; })
+									])
+								   .range([axisPad, width-axisPad]);
+					yScale = d3.scaleLinear()
+											.domain([
+												d3.min(data, function(d){return d.profit;}),
+												d3.max(data, function(d){return d.sales})
+											])
+											.range([height -axisPad, 0]);
+
+					xAxis = d3.axisBottom()
+							   .scale(xScale)
+							   .tickFormat(formatTime);
+
+					yAxis = d3.axisLeft()
+							   .scale(yScale)
+								 .tickFormat(d3.format("~s"));
+
+					svg.append("path")
+							.datum(data)
+								.attr("class", "salesLine")
+								.attr("stroke", "#F18605")
+								.attr("fill", "none")
+								.attr("d", d3.line()
+															.x(function(d) { return xScale(d.date); })
+															.y(function(d) { return yScale(d.sales); }));
+
+					svg.append("path")
+							.datum(data)
+								.attr("class", "profitLine")
+								.attr("stroke", "#F18605")
+								.attr("fill", "none")
+								.attr("d", d3.line()
+															.x(function(d) { return xScale(d.date); })
+															.y(function(d) { return yScale(d.profit); }));
+
+					svg.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (height - axisPad) + ")")
+						.call(xAxis);
+
+					svg.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + axisPad + ",0)")
+						.call(yAxis);
+
+					svg.append("text")
+							.attr("transform", "rotate(-90)")
+							.attr("y", axisPad/2)
+							.attr("x", -height/2)
+							.style("text-anchor", "middle")
+							.text("Millions of Dollars")
+
+					svg.append("text")
+							.attr("y", yScale(data[0].sales)+7)
+							.attr("x", xScale(data[0].date)+4)
+							.style("text-anchor", "middle")
+							.style("font-size", "12px")
+							.text("Sales")
+
+					svg.append("text")
+							.attr("y", yScale(data[0].profit)-5)
+							.attr("x", xScale(data[0].date)+12)
+							.style("text-anchor", "middle")
+							.style("font-size", "12px")
+							.text("Profits")
+
+					svg.append("text")
+							.attr("y", 15)
+							.attr("x", width/2)
+							.style("text-anchor", "middle")
+							.attr("font-weight", "bold")
+							.style("font-size", "20px")
+							.text("Amazon's Total Sales & Profits")
+
+				});
+
+				</script>
+		</div>
+
+		<div id="secondChart">
+			<p>Amazon reinvests much of their revenue back into the company</p>
+			<p>This revenue goes to salaries, but also "capital spending," essentially investment in further growth which takes the form of:
+				<ul>
+					<li>More warehouses</li>
+					<li>AWS</li>
+					<li>Advertising services</li>
+					<li>Acquring companies like Zappos & Twitch</li>
+				</ul>
+			</p>
+
+				<script>
+
+					width=700
+					height = 300
+					axisPad = 75
+
+					var svg2 = d3.select("#secondChart")
+									.append("svg")
+									.attr("width", width)
+									.attr("height", height);
+
+					var parseTime = d3.timeParse("%Y-%m-%d");
+					var formatTime = d3.timeFormat("%b '%y");
+
+					var processData = function(d){
+						return {
+							date: parseTime(d.Quarter),
+							sales: parseFloat(d.Revenue_Millions),//*1000000,
+							profit: parseFloat(d.Income_Millions)//*1000000
+						};
+					}
+
+					d3.csv("AmazonMoney.csv", processData).then(function(response) {
+						var data = response
+
+						xScale = d3.scaleTime()
+										 .domain([
+											d3.min(data, function(d) { return d.date; }),
+											d3.max(data, function(d) { return d.date; })
+										])
+										 .range([axisPad, width-axisPad]);
+						yScale = d3.scaleLinear()
+												.domain([
+													d3.min(data, function(d){return d.profit;}),
+													d3.max(data, function(d){return d.sales})
+												])
+												.range([height -axisPad, 0]);
+
+						xAxis = d3.axisBottom()
+									 .scale(xScale)
+									 .tickFormat(formatTime);
+
+						yAxis = d3.axisLeft()
+									 .scale(yScale)
+									 .tickFormat(d3.format("~s"));
+
+						svg2.append("path")
+								.datum(data)
+									.attr("class", "area")
+									.attr("fill", "orange")
+									.attr("opacity", .5)
+									.attr("d", d3.area()
+																.x(function(d) { return xScale(d.date); })
+																.y0(function(d) { return yScale(d.profit); })
+																.y1(function(d) { return yScale(d.sales); }));
+
+						svg2.append("g")
+							.attr("class", "axis")
+							.attr("transform", "translate(0," + (height - axisPad) + ")")
+							.call(xAxis);
+
+						svg2.append("g")
+							.attr("class", "axis")
+							.attr("transform", "translate(" + axisPad + ",0)")
+							.call(yAxis);
+
+						svg2.append("text")
+								.attr("transform", "rotate(-90)")
+								.attr("y", axisPad/2)
+								.attr("x", -height/2)
+								.style("text-anchor", "middle")
+								.text("Millions of Dollars")
+
+
+						svg2.append("text")
+								.attr("y", 15)
+								.attr("x", width/2)
+								.style("text-anchor", "middle")
+								.attr("font-weight", "bold")
+								.style("font-size", "20px")
+								.text("Amazon's Remaining Capital")
+					});
+
+					</script>
+		</div>
+
+		<div id="thirdChart">
+			<p>Amazon spent <a href="https://www.wsj.com/articles/hey-big-spender-tech-cash-will-keep-flowing-11549888200">$24 billion</a>
+				(only ~10% of revenue remaining after subtracting profit) in captial spending in 2018 to increase future profits, but payed no taxes on their 2018 profits
+				as a result of these investments</p>
+
+			<script>
+
+				var pieWidth = 300;
+				var pieHeight = 300;
+				var outerRadius = pieWidth / 2;
+				var innerRadius = pieWidth / 3;
+
+				var getYear = d3.timeFormat("%Y")
+				var processData = function(d){
+					return {
+						date: parseTime(d.Quarter),
+						sales: parseFloat(d.Revenue_Millions),//*1000000,
+						profit: parseFloat(d.Income_Millions)//*1000000
+					};
+				}
+
+				d3.csv("AmazonMoney.csv", processData).then(function(response) {
+					var data = response
+					var rev2018 = 0
+
+					for(i=0;i<data.length;i++){
+						if(getYear(data[i].date) == 2018){
+							rev2018 = rev2018 + data[i].sales - data[i].profit
+						}
+					}
+
+					pieData = [rev2018, 24000]
+
+					var arc = d3.arc()
+								.innerRadius(innerRadius)
+								.outerRadius(outerRadius)
+
+
+					var pie = d3.pie();
+
+					var color = d3.scaleOrdinal(["#1E2834", "#F18605"]);
+
+					var svg3 = d3.select("#thirdChart")
+								.append("svg")
+								.attr("width", pieWidth)
+								.attr("height", pieHeight);
+
+					var arcs = svg3.selectAll("g.arc")
+									.data(pie(pieData))
+									.enter()
+									.append("g")
+									.attr("class", "arc")
+									.attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+					arcs.append("path")
+							.attr("fill", function(d, i) {
+								return color(i);
+							})
+							.attr("d", arc);
+
+					svg3.append("text")
+							.attr("y", pieHeight/2)
+							.attr("x", pieWidth/2)
+							.style("text-anchor", "middle")
+							.attr("font-weight", "bold")
+							.style("font-size", "16px")
+							.text("Capital Spending")
+
+				});
+
+
+			</script>
+		</div>
+
+		<div id="fourthChart">
+			<p>According to Mark Mahaney, once Amazon's margins begin to rise (a threshold for this is simulated below),
+				growth investors will no longer be interested</p>
+
+			<script>
+
+				width=700
+				height = 300
+				axisPad = 75
+
+				var svg4 = d3.select("#fourthChart")
+								.append("svg")
+								.attr("width", width)
+								.attr("height", height);
+
+				var parseTime = d3.timeParse("%Y-%m-%d");
+				var formatTime = d3.timeFormat("%b '%y");
+
+				var processData = function(d){
+					return {
+						date: parseTime(d.Quarter),
+						sales: parseFloat(d.Revenue_Millions),//*1000000,
+						profit: parseFloat(d.Income_Millions)//*1000000
+					};
+				}
+
+				d3.csv("AmazonMoney.csv", processData).then(function(response) {
+					var data = response
+
+					xScale = d3.scaleTime()
+									 .domain([
+										d3.min(data, function(d) { return d.date; }),
+										d3.max(data, function(d) { return d.date; })
+									])
+									 .range([axisPad, width-axisPad]);
+					yScale = d3.scaleLinear()
+											.domain([
+												d3.min(data, function(d){return d.profit;}),
+												d3.max(data, function(d){return d.sales})
+											])
+											.range([height -axisPad, 0]);
+
+					xAxis = d3.axisBottom()
+								 .scale(xScale)
+								 .tickFormat(formatTime);
+
+					yAxis = d3.axisLeft()
+								 .scale(yScale)
+								 .tickFormat(d3.format("~s"));
+
+					svg4.append("path")
+							.datum(data)
+								.attr("class", "area")
+								.attr("fill", "orange")
+								.attr("opacity", .5)
+								.attr("d", d3.area()
+															.x(function(d) { return xScale(d.date); })
+															.y0(function(d) { return yScale(d.profit); })
+															.y1(function(d) { return yScale(d.sales); }));
+
+					svg4.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (height - axisPad) + ")")
+						.call(xAxis);
+
+					svg4.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + axisPad + ",0)")
+						.call(yAxis);
+
+					svg4.append("text")
+							.attr("transform", "rotate(-90)")
+							.attr("y", axisPad/2)
+							.attr("x", -height/2)
+							.style("text-anchor", "middle")
+							.text("Millions of Dollars")
+
+					svg4.append("line")
+						.attr("x1", axisPad)
+						.attr("x2", width)
+						.attr("y1", yScale(20000))
+						.attr("y2", yScale(20000))
+						.attr("stroke", "#009AD6");
+
+					svg4.append("text")
+						.attr("x", axisPad + 20)
+						.attr("y", yScale(20000) - 5)
+						.attr("fill", "#009AD6")
+						.text("Possible threshold where growth investors lose interest");
+
+					});
+
+			</script>
+		</div>
   </body>
+
+	<footer>
+	    <p>My first Makeover Monday d3 practice!<a href="https://www.vox.com/recode/2019/8/21/20826405/amazons-profits-revenue-free-cash-flow-explained-charts">
+			Inspirational Article from Vox</a></p>
+	</footer>
 </html>
